@@ -18,6 +18,10 @@ $RECYCLE.BIN/
 # Operating System Files
 # =========================
 
+*.exe
+*.bat
+*.pyc
+
 # OSX
 # =========================
 
@@ -26,8 +30,7 @@ $RECYCLE.BIN/
 .LSOverride
 
 # Icon must end with two \r
-Icon
-
+Icon
 # Thumbnails
 ._*
 
