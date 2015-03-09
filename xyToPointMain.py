@@ -229,7 +229,11 @@ class xyToPoint( QtGui.QWidget): # Inherits QWidget to install an Event filter
             if not (quell_id == None or quell_name == None or ziel_id == None or ziel_name == None or feldx == None or feldy == None):
 
                 # call the layer update methode
-                self.update_layer(quell_id, quell_name,ziel_id, ziel_name, feldx, feldy)
+                # and check if it succeded
+
+                if (self.update_layer(quell_id, quell_name,ziel_id, ziel_name, feldx, feldy)) == 'fail':
+                    # layer must not be added to the layer list
+                    continue
 
                 # reinitialize the layerlist
                 lyr = memlyr()
@@ -301,22 +305,31 @@ class xyToPoint( QtGui.QWidget): # Inherits QWidget to install an Event filter
 
 
 
-        # write the XML content into
-        # the xyToPoint XML File
-        ret = QtGui.QMessageBox.Yes
-        if os.path.exists(name):
-            ret = QtGui.QMessageBox.critical(None, "Hint", QtCore.QCoreApplication.translate("xyToPointMain","A xyToPoint XML already exists. Overwirte it?"),QtGui.QMessageBox.Yes | QtGui.QMessageBox.Cancel)
+        if len (self.layerliste) > 0:
 
-        if ret == QtGui.QMessageBox.Yes:
-            try:
-                file = open(name,"w")
-                #raus = d.toString()
-                raus = d.toByteArray()  # äöü
-                file.write(raus)
-                file.close()
-            except IOError: #fail
-                QtGui.QMessageBox.critical(None, "Error", QtCore.QCoreApplication.translate("xyToPointMain", "Unable to save the xyToPoint XML ") + currentProjectPath + QtCore.QCoreApplication.translate("xyToPointMain"," onto disk!"))
+            # write the XML content into
+            # the xyToPoint XML File
+            ret = QtGui.QMessageBox.Yes
+            if os.path.exists(name):
+                ret = QtGui.QMessageBox.critical(None, "Hint", QtCore.QCoreApplication.translate("xyToPointMain","A xyToPoint XML already exists. Overwirte it?"),QtGui.QMessageBox.Yes | QtGui.QMessageBox.Cancel)
 
+            if ret == QtGui.QMessageBox.Yes:
+                try:
+                    file = open(name,"w")
+                    #raus = d.toString()
+                    raus = d.toByteArray()  # äöü
+                    file.write(raus)
+                    file.close()
+                except IOError: #fail
+                    QtGui.QMessageBox.critical(None, "Error", QtCore.QCoreApplication.translate("xyToPointMain", "Unable to save the xyToPoint XML ") + currentProjectPath + QtCore.QCoreApplication.translate("xyToPointMain"," onto disk!"))
+
+        else:   # alles leer
+
+            if os.path.exists(name):
+                try:
+                    os.remove(name)
+                except:
+                    return
 
 
 
@@ -477,7 +490,8 @@ class xyToPoint( QtGui.QWidget): # Inherits QWidget to install an Event filter
         # if not found - exit
         if not (ok_1 and ok_2):
             QtGui.QMessageBox.critical(None, 'Warning',QtCore.QCoreApplication.translate("xyToPointMain", 'Layer not found'))
-            return
+            # remove from layerlist
+            return 'fail'
 
 
         # Re-Add the fields of the source table
