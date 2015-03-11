@@ -12,7 +12,7 @@
 name=xyToPoint
 qgisMinimumVersion=2.4
 description=this plugin creates a point layer based on tabular coordinates
-version=1.0
+version=1.0.1
 author=nikolaus batlogg
 email=nikolaus.batlogg@vorarlberg.at
 category=Vector

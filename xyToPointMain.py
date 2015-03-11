@@ -27,13 +27,10 @@ class xyToPoint( QtGui.QWidget): # Inherits QWidget to install an Event filter
         self.mc = self.iface.mapCanvas()    #Map Canvas variable
         self.layer = QgsVectorLayer()
 
-##        self.maptool = QgsMapTool(self.mc)     #force a variable type
-##        self.grafArea = QgsDistanceArea()
-##        self.DialogDock = QtGui.QDockWidget()
+
         self.Dialog = QtGui.QDialog()
         self.Dialog = None
-##        self.cpoint = QgsPoint()
-##        self.cpoint_list = []
+
 
         self.layerliste=[]
 
@@ -55,6 +52,9 @@ class xyToPoint( QtGui.QWidget): # Inherits QWidget to install an Event filter
         # connect project read/write signals to class methods (XML read/write) of the plugin
         QtCore.QObject.connect(QgsProject.instance(),  QtCore.SIGNAL("readProject(const QDomDocument&)"),  self.readXML)
         QtCore.QObject.connect(QgsProject.instance(),  QtCore.SIGNAL("writeProject(QDomDocument&)"),  self.writeXML)
+
+
+
         #----------------------------------------------------------------------
 
 
@@ -66,7 +66,7 @@ class xyToPoint( QtGui.QWidget): # Inherits QWidget to install an Event filter
 
         # GUI object
         self.Dialog = xyToPointDialog(self.iface.mainWindow())
-
+        self.Dialog.setFixedSize(241,646)
         self.akt_layer()
         self.Dialog.show()
 
@@ -76,7 +76,11 @@ class xyToPoint( QtGui.QWidget): # Inherits QWidget to install an Event filter
         # Connect Buttons and Combo Boxes to methods
         QtCore.QObject.connect(self.Dialog.cmbLayer, QtCore.SIGNAL("currentIndexChanged (int)"), self.akt_attr)
         QtCore.QObject.connect(self.Dialog.btnRun, QtCore.SIGNAL("clicked()"), self.create_layer)
+        QtCore.QObject.connect(self.Dialog.btnClose, QtCore.SIGNAL("clicked()"), self.close_dialog)
         QtCore.QObject.connect(self.Dialog.btnRefresh, QtCore.SIGNAL("clicked()"), self.trigger_update)
+
+        # connect CRS radio buttons
+        QtCore.QObject.connect(self.Dialog.rbProject, QtCore.SIGNAL("toggled(bool)"), self.akt_combo)
 
         # Initialize the Combo Box with Field Names of the first Layer in the QGIS Legend
         self.akt_attr(self.Dialog.cmbLayer.currentIndex())
@@ -89,6 +93,10 @@ class xyToPoint( QtGui.QWidget): # Inherits QWidget to install an Event filter
 
         self.Dialog.progressBar.setRange(0,1)   # kind of initialization to prevent oscillation of the bar
 
+        # disable crs combo box
+        self.Dialog.cmbLayerCRS.setEnabled(False)
+
+
     #########################################
     #Add loaded Layers to the Combo Box
     #########################################
@@ -98,8 +106,10 @@ class xyToPoint( QtGui.QWidget): # Inherits QWidget to install an Event filter
 
 
         self.Dialog.cmbLayer.clear()
+        self.Dialog.cmbLayerCRS.clear()
         for lyr_tmp in leginterface.layers():
             self.Dialog.cmbLayer.addItem(lyr_tmp.name(),lyr_tmp)    #Layername and Ref. to the Layerobject are added together
+            self.Dialog.cmbLayerCRS.addItem(lyr_tmp.name(),lyr_tmp)    #Layername and Ref. to the Layerobject are added together
 
     ###################################################################
     #Add new loaded Layers to the Combo Box while the Plugin is active
@@ -109,6 +119,7 @@ class xyToPoint( QtGui.QWidget): # Inherits QWidget to install an Event filter
 
         for lyr in lyr_list:
             self.Dialog.cmbLayer.addItem(lyr.name(),lyr)    #Layername and Ref. to the Layerobject are added together
+            self.Dialog.cmbLayerCRS.addItem(lyr.name(),lyr)    #Layername and Ref. to the Layerobject are added together
 
 
     ######################################################
@@ -133,6 +144,10 @@ class xyToPoint( QtGui.QWidget): # Inherits QWidget to install an Event filter
         self.Dialog.txtName.setText(self.Dialog.cmbLayer.itemText(self.Dialog.cmbLayer.currentIndex()) + '_pt')
 
 
+        # and syncronize crs layer combo box
+        self.Dialog.cmbLayerCRS.setCurrentIndex(self.Dialog.cmbLayer.currentIndex())
+
+
     ##########################
     # deactivating the plugin
     ##########################
@@ -150,15 +165,22 @@ class xyToPoint( QtGui.QWidget): # Inherits QWidget to install an Event filter
         self.iface.removeToolBarIcon(self.xyToPoint)
 
 
+    ##########################################
+    # close button clicked - send close event
+    ##########################################
+    def close_dialog(self):
+        self.Dialog.close()
 
     ##############################################################
     # Event filter for the Plugin GUI. We only catch the Close Event
     ##############################################################
     def eventFilter(self,affe,event):
 
-        if not event == None:
+
+        if not (event is None) and not (QtCore is None):
 
             if event.type() == QtCore.QEvent.Close: # close event
+
 
                  # disconnect everything
                 QtCore.QObject.disconnect(self.Dialog.cmbLayer, QtCore.SIGNAL("currentIndexChanged (int)"), self.akt_attr)
@@ -167,14 +189,15 @@ class xyToPoint( QtGui.QWidget): # Inherits QWidget to install an Event filter
                 #QtCore.QObject.disconnect(QgsProject.instance(),  QtCore.SIGNAL("readProject(const QDomDocument&)"),  self.readXML)
                 #QtCore.QObject.disconnect(QgsProject.instance(),  QtCore.SIGNAL("writeProject(QDomDocument&)"),  self.writeXML)
                 QtCore.QObject.disconnect( QgsMapLayerRegistry.instance(), QtCore.SIGNAL("layersAdded (QList< QgsMapLayer * > )"), self.add_layer)
+                QtCore.QObject.disconnect( QgsMapLayerRegistry.instance(), QtCore.SIGNAL("layersRemoved (QStringList )"), self.akt_layer)
 
 
-                #clear up
-                #self.Dialog.removeEventFilter(self)
-                #self.Dialog = None  # delete
                 return True
             else:   # everything else
                 return False
+        else:
+            return True # the plugin crashes
+
 
 
     #################################################################################
@@ -352,7 +375,14 @@ class xyToPoint( QtGui.QWidget): # Inherits QWidget to install an Event filter
 
         # new memory layer
         yes = False
-        geomType = 'Point' + '?crs=proj4:' + QgsProject.instance().readEntry("SpatialRefSys","/ProjectCRSProj4String")[0]
+
+        # define crs and geometry
+        if self.Dialog.rbProject.isChecked():
+            geomType = 'Point' + '?crs=proj4:' + QgsProject.instance().readEntry("SpatialRefSys","/ProjectCRSProj4String")[0]
+        else:
+            refi = self.Dialog.cmbLayerCRS.itemData(self.Dialog.cmbLayerCRS.currentIndex()).crs()
+            geomType = 'Point' + '?crs=proj4:' + refi.toProj4()
+
         epLayer = QgsVectorLayer(geomType, string.strip(layername), 'memory')
         QgsMapLayerRegistry.instance().addMapLayer(epLayer)
 
@@ -548,6 +578,15 @@ class xyToPoint( QtGui.QWidget): # Inherits QWidget to install an Event filter
         self.Dialog.progressBar.setRange(0,1)   # kind of reset to prevent oscillation of the bar
 
         epLayer.commitChanges()# write changes to the layer Object
+
+    ################################################
+    # disable/enable crs combo box
+    ################################################
+    def akt_combo(self,checked):
+        if checked:
+            self.Dialog.cmbLayerCRS.setEnabled(False)
+        else:
+            self.Dialog.cmbLayerCRS.setEnabled(True)
 
 
 

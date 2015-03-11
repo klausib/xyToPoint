@@ -23,10 +23,10 @@ def icon():
 	return "xyToPoint.png"
 
 def version():
-    return "1.0"
+    return "1.0.1"
 
 def qgisMinimumVersion():
-  return "2.0"
+  return "2.4"
 
 #def category():
 #  return "Database"
