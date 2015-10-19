@@ -4,68 +4,63 @@
 <context>
     <name>frmMainWindow</name>
     <message>
-        <location filename="mainWindow.ui" line="29"/>
+        <location filename="mainWindow.py" line="100"/>
         <source>xyToPoint</source>
         <translation>xyToPoint
 </translation>
     </message>
     <message>
-        <location filename="mainWindow.ui" line="41"/>
+        <location filename="mainWindow.py" line="101"/>
         <source>Inputtable or Layer</source>
         <translation>Eingangstabelle oder Layer</translation>
     </message>
     <message>
-        <location filename="mainWindow.ui" line="64"/>
+        <location filename="mainWindow.py" line="102"/>
         <source>Refresh All</source>
         <translation>Aktualisieren</translation>
     </message>
     <message>
-        <location filename="mainWindow.ui" line="77"/>
+        <location filename="mainWindow.py" line="103"/>
         <source>Column with X Coordinate Values</source>
         <translation>Spalte mit X Koordinaten Werten</translation>
     </message>
     <message>
-        <location filename="mainWindow.ui" line="100"/>
+        <location filename="mainWindow.py" line="104"/>
         <source>Column withY Coordinate Values</source>
         <translation>Spalte mit Y Koordinaten Werten</translation>
     </message>
     <message>
-        <location filename="mainWindow.ui" line="123"/>
+        <location filename="mainWindow.py" line="105"/>
         <source>Calculated Memory-Pointlayer</source>
         <translation>Ergbnis Memory Layer</translation>
     </message>
     <message>
-        <location filename="mainWindow.ui" line="135"/>
+        <location filename="mainWindow.py" line="106"/>
         <source>Create Point Layer</source>
         <translation>Punktlayer Erzeugen</translation>
     </message>
     <message>
-        <location filename="mainWindow.ui" line="148"/>
+        <location filename="mainWindow.py" line="107"/>
         <source>Layername (Input Optional)</source>
         <translation>Layername (Eingabe optional)</translation>
     </message>
     <message>
-        <location filename="mainWindow.ui" line="264"/>
+        <location filename="mainWindow.py" line="111"/>
         <source>Close</source>
         <translation>Schliessen</translation>
     </message>
     <message>
-        <location filename="mainWindow.ui" line="171"/>
+        <location filename="mainWindow.py" line="108"/>
         <source>Define CRS (optional)</source>
         <translation>KBS zuweisen (optional)</translation>
     </message>
     <message>
-        <location filename="mainWindow.ui" line="202"/>
+        <location filename="mainWindow.py" line="109"/>
         <source>Project Settings</source>
         <translation>Projekteinstellung</translation>
     </message>
     <message>
-        <location filename="mainWindow.ui" line="224"/>
-        <source>buttonGroup</source>
-        <translation></translation>
-    </message>
-    <message>
-        <location filename="mainWindow.ui" line="221"/>
+        <location filename="mainWindow.py" line="110"/>
         <source>Layer</source>
         <translation>Layer</translation>
     </message>
@@ -106,19 +101,29 @@
         <translation>fehlgeschalgen!</translation>
     </message>
     <message>
-        <location filename="xyToPointMain.py" line="427"/>
+        <location filename="xyToPointMain.py" line="452"/>
         <source>Please choose numerical Columns!</source>
-        <translation>Bitte nummerische Splaten auswählen!</translation>
+        <translation>Bitte nummerische Spalten auswählen!</translation>
     </message>
     <message>
-        <location filename="xyToPointMain.py" line="522"/>
+        <location filename="xyToPointMain.py" line="537"/>
         <source>Layer not found</source>
         <translation>Layer nicht gefunden</translation>
     </message>
     <message>
-        <location filename="xyToPointMain.py" line="561"/>
+        <location filename="xyToPointMain.py" line="576"/>
         <source>Unable to Update</source>
         <translation>Aktualisierung fehlgeschlagen</translation>
+    </message>
+    <message>
+        <location filename="xyToPointMain.py" line="450"/>
+        <source> features!</source>
+        <translation type="unfinished"> Features fehlgeschlagen!</translation>
+    </message>
+    <message>
+        <location filename="xyToPointMain.py" line="450"/>
+        <source>Creation failed for </source>
+        <translation>Das Erzeugen von</translation>
     </message>
 </context>
 </TS>

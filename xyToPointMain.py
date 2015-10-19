@@ -137,8 +137,9 @@ class xyToPoint( QtGui.QWidget): # Inherits QWidget to install an Event filter
 
         lyr_prov = self.Dialog.cmbLayer.itemData(iti).dataProvider()
         for field in lyr_prov.fields():
-            self.Dialog.cmbX.addItem(field.name())
-            self.Dialog.cmbY.addItem(field.name())
+            if field.type() != QtCore.QVariant.String:  # add numerical-type fields only
+                self.Dialog.cmbX.addItem(field.name())
+                self.Dialog.cmbY.addItem(field.name())
 
         # Optional Layername
         self.Dialog.txtName.setText(self.Dialog.cmbLayer.itemText(self.Dialog.cmbLayer.currentIndex()) + '_pt')
@@ -410,34 +411,45 @@ class xyToPoint( QtGui.QWidget): # Inherits QWidget to install an Event filter
         x_spalte = self.Dialog.cmbX.itemText(self.Dialog.cmbX.currentIndex())
         y_spalte = self.Dialog.cmbY.itemText(self.Dialog.cmbY.currentIndex())
 
+
         # QGIS Objects - necessery to create the point features
         ep_point = QgsPoint()
         ep_geom = QgsGeometry()
         ep_feature = QgsFeature()
 
         # loop through the source table
+        i_failed = 0
+        i_success = 0
+        i = 0
+
         for line in in_lyr.getFeatures():
 
-            # short check if the fields contain numerical values
+            # short check whether the fields contain numerical values or not
             try:
                 # point geometry
                 ep_point.setX(float(line.attribute(x_spalte)))
                 ep_point.setY(float(line.attribute(y_spalte)))
+                # set feature geometry
+                ep_feature.setGeometry(ep_geom.fromPoint(ep_point))
+
+                self.Dialog.progressBar.setValue(i)
+
+                # set feature attributes
+                ep_feature.setAttributes(line.attributes())
+                # and add them
+                epLayer.addFeature(ep_feature)
+                i_success = i_success + 1
             except:
-                QtGui.QMessageBox.critical(None, 'Error',QtCore.QCoreApplication.translate("xyToPointMain", 'Please choose numerical Columns!'))
-                QgsMapLayerRegistry.instance().removeMapLayer(epLayer.id())
-                return
-            # set feature geometry
-            ep_feature.setGeometry(ep_geom.fromPoint(ep_point))
-
-            self.Dialog.progressBar.setValue(i)
-
-            # set feature attributes
-            ep_feature.setAttributes(line.attributes())
-            # and add them
-            epLayer.addFeature(ep_feature)
+                i_failed = i_failed + 1
+                next
 
             i = i + 1
+
+
+        if i_failed > 0:
+            QtGui.QMessageBox.critical(None, 'Error',QtCore.QCoreApplication.translate("xyToPointMain", 'Creation failed for ') + str(i_failed) + QtCore.QCoreApplication.translate("xyToPointMain",' feature(s)!' ))
+
+
 
         self.Dialog.progressBar.setRange(0,1)   # kind of reset to prevent oscillation of the bar
 
