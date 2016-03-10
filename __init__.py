@@ -23,7 +23,7 @@ def icon():
 	return "xyToPoint.png"
 
 def version():
-    return "1.0.3"
+    return "1.0.2"
 
 def qgisMinimumVersion():
   return "2.4"
