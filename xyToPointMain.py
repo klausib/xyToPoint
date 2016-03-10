@@ -559,20 +559,22 @@ class xyToPoint( QtGui.QWidget): # Inherits QWidget to install an Event filter
 
         # a progress bar might be usefull...
         i = 0
+        i_failed = 0
         self.Dialog.progressBar.setRange(0,in_lyr.featureCount()-1)
 
          # loop through the source table
         for line in in_lyr.getFeatures():
 
             # short check if the fields contain numerical values
+
             try:
                 # point geometry
                 ep_point.setX(float(line.attribute(spalteX)))
                 ep_point.setY(float(line.attribute(spalteY)))    #da ein tuple zurückgegeben wird
             except:
-                QtGui.QMessageBox.critical(None, 'Error',QtCore.QCoreApplication.translate("xyToPointMain", 'Unable to Update'))
-                QgsMapLayerRegistry.instance().removeMapLayer(epLayer.id())
-                return
+                i_failed = i_failed + 1
+                next
+
 
             # set feature geometry
             ep_feature.setGeometry(ep_geom.fromPoint(ep_point))         #da ein tuple zurückgegeben wird
@@ -590,6 +592,10 @@ class xyToPoint( QtGui.QWidget): # Inherits QWidget to install an Event filter
         self.Dialog.progressBar.setRange(0,1)   # kind of reset to prevent oscillation of the bar
 
         epLayer.commitChanges()# write changes to the layer Object
+
+        if i_failed > 0:
+            QtGui.QMessageBox.critical(None, 'Error',QtCore.QCoreApplication.translate("xyToPointMain", 'Creation failed for ') + str(i_failed) + QtCore.QCoreApplication.translate("xyToPointMain",' feature(s)!' ))
+
 
     ################################################
     # disable/enable crs combo box
