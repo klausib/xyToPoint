@@ -1,23 +1,24 @@
 # -*- coding: utf-8 -*-
 
 
-from PyQt4 import QtCore, QtGui, QtXml
+from qgis.PyQt import QtCore, QtGui, QtXml, QtWidgets
 from qgis.gui import *
 from qgis.core import *
 from qgis.analysis import *
 
 
-import resources, math, copy, string, os
+import math, copy, string, os
+from .resources import *
 
-from mainWindow import *
+from .mainWindow import *
 
 
 
 
-class xyToPoint( QtGui.QWidget): # Inherits QWidget to install an Event filter
+class xyToPoint( QtWidgets.QWidget): # Inherits QWidget to install an Event filter
     def __init__(self,iface):
 
-        QtGui.QWidget.__init__(self)
+        QtWidgets.QWidget.__init__(self)
 
         #----------------------------------------------------------------------
         #instance variables
@@ -28,7 +29,7 @@ class xyToPoint( QtGui.QWidget): # Inherits QWidget to install an Event filter
         self.layer = QgsVectorLayer()
 
 
-        self.Dialog = QtGui.QDialog()
+        self.Dialog = QtWidgets.QDialog()
         self.Dialog = None
 
 
@@ -42,16 +43,17 @@ class xyToPoint( QtGui.QWidget): # Inherits QWidget to install an Event filter
     def initGui(self):
 
         # action for starting the plugin
-        self.xyToPoint = QtGui.QAction( QtGui.QIcon(":/plugins/xyToPoint/xyToPoint.png"),  QtCore.QCoreApplication.translate("xyToPointMain", "Create Point Layer from XY Attribute Values"),  self.iface.mainWindow() )
-        QtCore.QObject.connect(self.xyToPoint, QtCore.SIGNAL("triggered()"), self.showMainWindow)
+        self.xyToPoint = QtWidgets.QAction( QtGui.QIcon(":/plugins/xyToPoint/xyToPoint.png"),  QtCore.QCoreApplication.translate("xyToPointMain", "Create Point Layer from XY Attribute Values"),  self.iface.mainWindow() )
+        self.xyToPoint.triggered.connect(self.showMainWindow)
 
         # toolbar button and menue item
         self.iface.addToolBarIcon( self.xyToPoint )
         self.iface.addPluginToVectorMenu(QtCore.QCoreApplication.translate("xyToPointMain",  "Create Point Layer from XY Attribute Values"),  self.xyToPoint)
 
         # connect project read/write signals to class methods (XML read/write) of the plugin
-        QtCore.QObject.connect(QgsProject.instance(),  QtCore.SIGNAL("readProject(const QDomDocument&)"),  self.readXML)
-        QtCore.QObject.connect(QgsProject.instance(),  QtCore.SIGNAL("writeProject(QDomDocument&)"),  self.writeXML)
+        QgsProject.instance().readProject.connect(self.readXML)
+        QgsProject.instance().writeProject.connect(self.writeXML)
+        self.layerliste=[]
 
 
 
@@ -61,7 +63,7 @@ class xyToPoint( QtGui.QWidget): # Inherits QWidget to install an Event filter
     #############################################
     #start the Plugin
     #############################################
-    def showMainWindow(self):
+    def showMainWindow(self,update = 'no'):
 
 
         # GUI object
@@ -74,27 +76,31 @@ class xyToPoint( QtGui.QWidget): # Inherits QWidget to install an Event filter
         self.Dialog.installEventFilter(self)
 
         # Connect Buttons and Combo Boxes to methods
-        QtCore.QObject.connect(self.Dialog.cmbLayer, QtCore.SIGNAL("currentIndexChanged (int)"), self.akt_attr)
-        QtCore.QObject.connect(self.Dialog.btnRun, QtCore.SIGNAL("clicked()"), self.create_layer)
-        QtCore.QObject.connect(self.Dialog.btnClose, QtCore.SIGNAL("clicked()"), self.close_dialog)
-        QtCore.QObject.connect(self.Dialog.btnRefresh, QtCore.SIGNAL("clicked()"), self.trigger_update)
+        self.Dialog.cmbLayer.currentIndexChanged.connect(self.akt_attr)
+        self.Dialog.btnRun.clicked.connect(self.create_layer)
+        self.Dialog.btnClose.clicked.connect(self.close_dialog)
+        self.Dialog.btnRefresh.clicked.connect(self.trigger_update)
 
         # connect CRS radio buttons
-        QtCore.QObject.connect(self.Dialog.rbProject, QtCore.SIGNAL("toggled(bool)"), self.akt_combo)
+        self.Dialog.rbProject.toggled.connect(self.akt_combo)
 
         # Initialize the Combo Box with Field Names of the first Layer in the QGIS Legend
         self.akt_attr(self.Dialog.cmbLayer.currentIndex())
 
 
         # emits a layer add event
-        QtCore.QObject.connect( QgsMapLayerRegistry.instance(), QtCore.SIGNAL("layersAdded (QList< QgsMapLayer * > )"), self.add_layer)
+        QgsProject.instance().layersAdded.connect(self.add_layer)
+
         # emits a layer remove event
-        QtCore.QObject.connect( QgsMapLayerRegistry.instance(), QtCore.SIGNAL("layersRemoved (QStringList )"), self.akt_layer)
+        QgsProject.instance().layersRemoved.connect(self.akt_layer)
 
         self.Dialog.progressBar.setRange(0,1)   # kind of initialization to prevent oscillation of the bar
 
         # disable crs combo box
         self.Dialog.cmbLayerCRS.setEnabled(False)
+
+        self.Dialog.rbProject.setChecked(False)
+        self.Dialog.rbLayer.setChecked(True)
 
 
     #########################################
@@ -102,12 +108,10 @@ class xyToPoint( QtGui.QWidget): # Inherits QWidget to install an Event filter
     #########################################
     def akt_layer(self, layer = None):
 
-        leginterface = self.iface.legendInterface()
-
-
         self.Dialog.cmbLayer.clear()
         self.Dialog.cmbLayerCRS.clear()
-        for lyr_tmp in leginterface.layers():
+        for lyr_tmp_d in QgsProject.instance().mapLayers():
+            lyr_tmp = QgsProject.instance().mapLayers()[lyr_tmp_d]
             self.Dialog.cmbLayer.addItem(lyr_tmp.name(),lyr_tmp)    #Layername and Ref. to the Layerobject are added together
             self.Dialog.cmbLayerCRS.addItem(lyr_tmp.name(),lyr_tmp)    #Layername and Ref. to the Layerobject are added together
 
@@ -155,8 +159,8 @@ class xyToPoint( QtGui.QWidget): # Inherits QWidget to install an Event filter
     def unload(self):
 
 
-        QtCore.QObject.disconnect(QgsProject.instance(),  QtCore.SIGNAL("readProject(const QDomDocument&)"),  self.readXML)
-        QtCore.QObject.disconnect(QgsProject.instance(),  QtCore.SIGNAL("writeProject(QDomDocument&)"),  self.writeXML)
+        QgsProject.instance().disconnect()
+        QgsProject.instance().disconnect()
 
         #first delete the Widget Object
         #self.Dialog = None
@@ -183,14 +187,12 @@ class xyToPoint( QtGui.QWidget): # Inherits QWidget to install an Event filter
             if event.type() == QtCore.QEvent.Close: # close event
 
 
-                 # disconnect everything
-                QtCore.QObject.disconnect(self.Dialog.cmbLayer, QtCore.SIGNAL("currentIndexChanged (int)"), self.akt_attr)
-                QtCore.QObject.disconnect(self.Dialog.btnRun, QtCore.SIGNAL("clicked()"), self.create_layer)
-                QtCore.QObject.disconnect(self.Dialog.btnRefresh, QtCore.SIGNAL("clicked()"), self.trigger_update)
-                #QtCore.QObject.disconnect(QgsProject.instance(),  QtCore.SIGNAL("readProject(const QDomDocument&)"),  self.readXML)
-                #QtCore.QObject.disconnect(QgsProject.instance(),  QtCore.SIGNAL("writeProject(QDomDocument&)"),  self.writeXML)
-                QtCore.QObject.disconnect( QgsMapLayerRegistry.instance(), QtCore.SIGNAL("layersAdded (QList< QgsMapLayer * > )"), self.add_layer)
-                QtCore.QObject.disconnect( QgsMapLayerRegistry.instance(), QtCore.SIGNAL("layersRemoved (QStringList )"), self.akt_layer)
+                 # disconnect
+                self.Dialog.cmbLayer.currentIndexChanged.disconnect()
+                self.Dialog.btnRun.clicked.disconnect()
+                self.Dialog.btnRefresh.clicked.disconnect()
+                QgsProject.instance().layersAdded.disconnect()
+                QgsProject.instance().layersRemoved.disconnect()
 
 
                 return True
@@ -230,13 +232,13 @@ class xyToPoint( QtGui.QWidget): # Inherits QWidget to install an Event filter
         join = d.elementsByTagName("join")
 
         i = 0
-        #QtGui.QMessageBox.critical(None, "Neu geordnet !!",str(range(join.length())))
+        #QtWidgets.QMessageBox.critical(None, "Neu geordnet !!",str(range(join.length())))
 
 
         di_cl = False   # update is called interactively
         if self.Dialog is None:
             # update ist called by loading a QGIS Project
-            self.showMainWindow()   # to show the progress bar!
+            self.showMainWindow('update')   # to show the progress bar!
             di_cl = True
 
         for i in range(join.length()):
@@ -255,7 +257,7 @@ class xyToPoint( QtGui.QWidget): # Inherits QWidget to install an Event filter
                 # call the layer update methode
                 # and check if it succeded
 
-                if (self.update_layer(quell_id, quell_name,ziel_id, ziel_name, feldx, feldy)) == 'fail':
+                if (self.create_layer(int(1),quell_id, quell_name,ziel_id, ziel_name, feldx, feldy)) == 'fail':
                     # layer must not be added to the layer list
                     continue
 
@@ -267,7 +269,7 @@ class xyToPoint( QtGui.QWidget): # Inherits QWidget to install an Event filter
                 lyr.name_quelllyr = quell_name
                 lyr.x_spalte = feldx
                 lyr.y_spalte = feldy
-                self.layerliste.append(lyr)
+                #self.layerliste.append(lyr)
 
         self.iface.mapCanvas().refresh()
 
@@ -333,19 +335,20 @@ class xyToPoint( QtGui.QWidget): # Inherits QWidget to install an Event filter
 
             # write the XML content into
             # the xyToPoint XML File
-            ret = QtGui.QMessageBox.Yes
+            ret = QtWidgets.QMessageBox.Yes
             if os.path.exists(name):
-                ret = QtGui.QMessageBox.critical(None, "Hint", QtCore.QCoreApplication.translate("xyToPointMain","A xyToPoint XML already exists. Overwirte it?"),QtGui.QMessageBox.Yes | QtGui.QMessageBox.Cancel)
+                ret = QtWidgets.QMessageBox.critical(None, "Hint", QtCore.QCoreApplication.translate("xyToPointMain","A xyToPoint XML already exists. Overwrite?"),QtWidgets.QMessageBox.Yes | QtWidgets.QMessageBox.Cancel)
 
-            if ret == QtGui.QMessageBox.Yes:
+            if ret == QtWidgets.QMessageBox.Yes:
                 try:
                     file = open(name,"w")
-                    #raus = d.toString()
-                    raus = d.toByteArray()  # äöü
+                    #raus = d.tostr()
+                    #raus = d.toByteArray()  # äöü
+                    raus = d.toString()  # äöü
                     file.write(raus)
                     file.close()
                 except IOError: #fail
-                    QtGui.QMessageBox.critical(None, "Error", QtCore.QCoreApplication.translate("xyToPointMain", "Unable to save the xyToPoint XML ") + currentProjectPath + QtCore.QCoreApplication.translate("xyToPointMain"," onto disk!"))
+                    QtWidgets.QMessageBox.critical(None, "Error", QtCore.QCoreApplication.translate("xyToPointMain", "Unable to save the xyToPoint XML ") + currentProjectPath + QtCore.QCoreApplication.translate("xyToPointMain"," onto disk!"))
 
         else:   # alles leer
 
@@ -361,36 +364,45 @@ class xyToPoint( QtGui.QWidget): # Inherits QWidget to install an Event filter
     # create a point memory layer. calculate the coordinates according to the data
     # of the x and y fields of the source table
     ###############################################################################
-    def create_layer(self,tabellenname = None,abfrage_where = None,Gemeindetext = ""):
+    #def create_layer(self,quell_id = None, quell_name = None,ziel_id = None, ziel_name = None, feldx = None, feldy = None,abfrage_where = None,Gemeindetext = ""):
+    def create_layer(self, modus, quell_id = None, quell_name = None,ziel_id = None, ziel_name = None, feldx = None, feldy = None):
 
-
+        flag = 'fail'
         # the source table (layer) - a reference to the itemdata Attribute of the cmbLayer Combobox
-        in_lyr = self.Dialog.cmbLayer.itemData(self.Dialog.cmbLayer.currentIndex())
+        if modus == 0:
+            in_lyr = self.Dialog.cmbLayer.itemData(self.Dialog.cmbLayer.currentIndex())
+            # fetch the layer name written to the text edit widget
+            layername = self.Dialog.txtName.text()
+            if layername == '':
+                # if none, set the name
+                layername = self.Dialog.cmbLayer.itemText(self.Dialog.cmbLayer.currentIndex()) + '_pt'
+        elif modus == 1:
+            in_lyr = QgsProject.instance().mapLayers()[quell_id]
+            if QgsProject.instance().mapLayers()[ziel_id] != None:
+                QgsProject.instance().removeMapLayer(ziel_id)
+            layername = ziel_name
+        else:
+            return 'fail'
 
-
-        # fetch the layer name written to the text edit widget
-        layername = self.Dialog.txtName.text()
-        if layername == '':
-            # if none, set the name
-            layername = self.Dialog.cmbLayer.itemText(self.Dialog.cmbLayer.currentIndex()) + '_pt'
 
         # new memory layer
         yes = False
 
         # define crs and geometry
         if self.Dialog.rbProject.isChecked():
-            geomType = 'Point' + '?crs=proj4:' + QgsProject.instance().readEntry("SpatialRefSys","/ProjectCRSProj4String")[0]
+            geomType = 'Point' + '?crs=proj4:' + QgsProject.instance().readEntry("SpatialRefSys","/ProjectCRSProj4str")[0]
         else:
             refi = self.Dialog.cmbLayerCRS.itemData(self.Dialog.cmbLayerCRS.currentIndex()).crs()
             geomType = 'Point' + '?crs=proj4:' + refi.toProj4()
 
-        epLayer = QgsVectorLayer(geomType, string.strip(layername), 'memory')
-        QgsMapLayerRegistry.instance().addMapLayer(epLayer)
+        epLayer =  QgsVectorLayer(geomType, str.strip(layername), 'memory')
+        QgsProject.instance().addMapLayer(epLayer)
 
 
         # Add the fields of the source table
         feld = []
-        feldnamen = self.Dialog.cmbLayer.itemData(self.Dialog.cmbLayer.currentIndex()).dataProvider().fields()    # the source field map
+        #feldnamen = self.Dialog.cmbLayer.itemData(self.Dialog.cmbLayer.currentIndex()).dataProvider().fields()    # the source field map
+        feldnamen = in_lyr.dataProvider().fields()    # the source field map
 
         epProvider = epLayer.dataProvider() # to add fields use the data provider object
         # create the field list
@@ -408,9 +420,17 @@ class xyToPoint( QtGui.QWidget): # Inherits QWidget to install an Event filter
         i = 0
         self.Dialog.progressBar.setRange(0,in_lyr.featureCount()-1)
 
-        x_spalte = self.Dialog.cmbX.itemText(self.Dialog.cmbX.currentIndex())
-        y_spalte = self.Dialog.cmbY.itemText(self.Dialog.cmbY.currentIndex())
+        x_spalte = feldx
+        y_spalte = feldy
 
+        # None if layer is created for the first time
+        if x_spalte == None or y_spalte == None:
+            x_spalte = self.Dialog.cmbX.itemText(self.Dialog.cmbX.currentIndex())
+            y_spalte = self.Dialog.cmbY.itemText(self.Dialog.cmbY.currentIndex())
+
+        # final test - dont no what, nor why,  but its not good - if a Value is None
+        if x_spalte == None or y_spalte == None:
+            return 'fail'
 
         # QGIS Objects - necessery to create the point features
         ep_point = QgsPoint()
@@ -430,7 +450,7 @@ class xyToPoint( QtGui.QWidget): # Inherits QWidget to install an Event filter
                 ep_point.setX(float(line.attribute(x_spalte)))
                 ep_point.setY(float(line.attribute(y_spalte)))
                 # set feature geometry
-                ep_feature.setGeometry(ep_geom.fromPoint(ep_point))
+                ep_feature.setGeometry(ep_geom.fromQPointF(ep_point.toQPointF()))
 
                 self.Dialog.progressBar.setValue(i)
 
@@ -447,8 +467,9 @@ class xyToPoint( QtGui.QWidget): # Inherits QWidget to install an Event filter
 
 
         if i_failed > 0:
-            QtGui.QMessageBox.critical(None, 'Error',QtCore.QCoreApplication.translate("xyToPointMain", 'Creation failed for ') + str(i_failed) + QtCore.QCoreApplication.translate("xyToPointMain",' feature(s)!' ))
-
+            QtWidgets.QMessageBox.critical(None, 'Error',QtCore.QCoreApplication.translate("xyToPointMain", 'Creation failed for ') + str(i_failed) + QtCore.QCoreApplication.translate("xyToPointMain",' feature(s)!' ))
+        else:
+            flag = 'OK'
 
 
         self.Dialog.progressBar.setRange(0,1)   # kind of reset to prevent oscillation of the bar
@@ -472,7 +493,7 @@ class xyToPoint( QtGui.QWidget): # Inherits QWidget to install an Event filter
 
             self.layerliste.append(lyr)
 
-
+        return flag
 
     ##############################################################################
     # trigger interactively (refresh buttun) a update of all created point layers
@@ -503,7 +524,7 @@ class xyToPoint( QtGui.QWidget): # Inherits QWidget to install an Event filter
     def update_layer(self, quell_id, quell_name, ziel_id, ziel_name, spalteX, spalteY):
 
 
-        layerMap = QgsMapLayerRegistry.instance().mapLayers()
+        layerMap = QgsProject.instance().mapLayers()
 
         # QGIS Objects - necessery to create the point features
         ep_point = QgsPoint()
@@ -516,22 +537,22 @@ class xyToPoint( QtGui.QWidget): # Inherits QWidget to install an Event filter
         ok_1 = False
         ok_2 = False
 
-        for vorhanden in QgsMapLayerRegistry.instance().mapLayers():    # dont use the self.mc.layers(): method
+        for vorhanden in QgsProject.instance().mapLayers():             # dont use the self.mc.layers(): method
                                                                         # its not ready initialized when QGIS starts
-                                                                        # use the QgsMapLayerRegistry.instance() Object instead!
+                                                                        # use the QgsProject.instance() Object instead!
 
 
             lyr = layerMap[vorhanden]
-            if string.strip(lyr.id()) == string.strip(quell_id):  # Sourece Table Found
+            if str.strip(lyr.id()) == str.strip(quell_id):  # Sourece Table Found
                 ok_1 = True
                 in_lyr = lyr
-            if string.strip(lyr.id()) == string.strip(ziel_id):  # Target memory layer found
+            if str.strip(lyr.id()) == str.strip(ziel_id):  # Target memory layer found
                 ok_2 = True
                 epLayer = lyr
 
         # if not found - exit
         if not (ok_1 and ok_2):
-            QtGui.QMessageBox.critical(None, 'Warning',QtCore.QCoreApplication.translate("xyToPointMain", 'Layer not found'))
+            QtWidgets.QMessageBox.critical(None, 'Warning',QtCore.QCoreApplication.translate("xyToPointMain", 'Layer not found'))
             # remove from layerlist
             return 'fail'
 
@@ -577,7 +598,7 @@ class xyToPoint( QtGui.QWidget): # Inherits QWidget to install an Event filter
 
 
             # set feature geometry
-            ep_feature.setGeometry(ep_geom.fromPoint(ep_point))         #da ein tuple zurückgegeben wird
+            ep_feature.setGeometry(ep_geom.fromQPointF(ep_point.toQPointF()))         #da ein tuple zurückgegeben wird
 
             self.Dialog.progressBar.setValue(i)
 
@@ -594,7 +615,7 @@ class xyToPoint( QtGui.QWidget): # Inherits QWidget to install an Event filter
         epLayer.commitChanges()# write changes to the layer Object
 
         if i_failed > 0:
-            QtGui.QMessageBox.critical(None, 'Error',QtCore.QCoreApplication.translate("xyToPointMain", 'Creation failed for ') + str(i_failed) + QtCore.QCoreApplication.translate("xyToPointMain",' feature(s)!' ))
+            QtWidgets.QMessageBox.critical(None, 'Error',QtCore.QCoreApplication.translate("xyToPointMain", 'Creation failed for ') + str(i_failed) + QtCore.QCoreApplication.translate("xyToPointMain",' feature(s)!' ))
 
 
     ################################################
@@ -615,10 +636,10 @@ class xyToPoint( QtGui.QWidget): # Inherits QWidget to install an Event filter
 # inherits the QT Designer window definition
 # and the QDialog definition
 ###############################################
-class xyToPointDialog(QtGui.QDialog,Ui_frmMainWindow):
+class xyToPointDialog(QtWidgets.QDialog,Ui_frmMainWindow):
     def __init__(self,parent):
 
-        QtGui.QDialog.__init__(self,parent) #parent keeps the dialog in front of the parent window (without locking it).
+        QtWidgets.QDialog.__init__(self,parent) #parent keeps the dialog in front of the parent window (without locking it).
         #QtGui.QDialog.__init__(self)
         Ui_frmMainWindow.__init__(self)
 

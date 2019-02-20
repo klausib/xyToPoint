@@ -1,66 +1,66 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!DOCTYPE TS>
-<TS version="2.0" language="de_AT">
+<TS version="2.1" language="de_AT">
 <context>
     <name>frmMainWindow</name>
     <message>
-        <location filename="mainWindow.py" line="100"/>
+        <location filename="mainWindow.py" line="95"/>
         <source>xyToPoint</source>
         <translation>xyToPoint
 </translation>
     </message>
     <message>
-        <location filename="mainWindow.py" line="101"/>
+        <location filename="mainWindow.py" line="96"/>
         <source>Inputtable or Layer</source>
         <translation>Eingangstabelle oder Layer</translation>
     </message>
     <message>
-        <location filename="mainWindow.py" line="102"/>
+        <location filename="mainWindow.py" line="97"/>
         <source>Refresh All</source>
         <translation>Aktualisieren</translation>
     </message>
     <message>
-        <location filename="mainWindow.py" line="103"/>
+        <location filename="mainWindow.py" line="98"/>
         <source>Column with X Coordinate Values</source>
         <translation>Spalte mit X Koordinaten Werten</translation>
     </message>
     <message>
-        <location filename="mainWindow.py" line="104"/>
+        <location filename="mainWindow.py" line="99"/>
         <source>Column withY Coordinate Values</source>
         <translation>Spalte mit Y Koordinaten Werten</translation>
     </message>
     <message>
-        <location filename="mainWindow.py" line="105"/>
+        <location filename="mainWindow.py" line="100"/>
         <source>Calculated Memory-Pointlayer</source>
         <translation>Ergbnis Memory Layer</translation>
     </message>
     <message>
-        <location filename="mainWindow.py" line="106"/>
+        <location filename="mainWindow.py" line="101"/>
         <source>Create Point Layer</source>
         <translation>Punktlayer Erzeugen</translation>
     </message>
     <message>
-        <location filename="mainWindow.py" line="107"/>
+        <location filename="mainWindow.py" line="102"/>
         <source>Layername (Input Optional)</source>
         <translation>Layername (Eingabe optional)</translation>
     </message>
     <message>
-        <location filename="mainWindow.py" line="111"/>
+        <location filename="mainWindow.py" line="106"/>
         <source>Close</source>
         <translation>Schliessen</translation>
     </message>
     <message>
-        <location filename="mainWindow.py" line="108"/>
+        <location filename="mainWindow.py" line="103"/>
         <source>Define CRS (optional)</source>
         <translation>KBS zuweisen (optional)</translation>
     </message>
     <message>
-        <location filename="mainWindow.py" line="109"/>
+        <location filename="mainWindow.py" line="104"/>
         <source>Project Settings</source>
-        <translation>Projekteinstellung</translation>
+        <translation>Projekt</translation>
     </message>
     <message>
-        <location filename="mainWindow.py" line="110"/>
+        <location filename="mainWindow.py" line="105"/>
         <source>Layer</source>
         <translation>Layer</translation>
     </message>
@@ -81,49 +81,39 @@
 <context>
     <name>xyToPointMain</name>
     <message>
-        <location filename="xyToPointMain.py" line="50"/>
+        <location filename="xyToPointMain.py" line="51"/>
         <source>Create Point Layer from XY Attribute Values</source>
         <translation>Erzeugt Punktlayer aus XY Attributwerten</translation>
     </message>
     <message>
-        <location filename="xyToPointMain.py" line="337"/>
-        <source>A xyToPoint XML already exists. Overwirte it?</source>
-        <translation>Ein xyTopOint XML ist ebreits vorhanden. Überschreiben?</translation>
+        <location filename="xyToPointMain.py" line="340"/>
+        <source>A xyToPoint XML already exists. Overwrite?</source>
+        <translation>Ein xyToPoint XML ist ebreits vorhanden. Überschreiben?</translation>
     </message>
     <message>
-        <location filename="xyToPointMain.py" line="347"/>
+        <location filename="xyToPointMain.py" line="351"/>
         <source>Unable to save the xyToPoint XML </source>
         <translation>Sichern das xyToPoint XML</translation>
     </message>
     <message>
-        <location filename="xyToPointMain.py" line="347"/>
+        <location filename="xyToPointMain.py" line="351"/>
         <source> onto disk!</source>
         <translation>fehlgeschalgen!</translation>
     </message>
     <message>
-        <location filename="xyToPointMain.py" line="452"/>
-        <source>Please choose numerical Columns!</source>
-        <translation>Bitte nummerische Spalten auswählen!</translation>
-    </message>
-    <message>
-        <location filename="xyToPointMain.py" line="537"/>
+        <location filename="xyToPointMain.py" line="555"/>
         <source>Layer not found</source>
         <translation>Layer nicht gefunden</translation>
     </message>
     <message>
-        <location filename="xyToPointMain.py" line="576"/>
-        <source>Unable to Update</source>
-        <translation>Aktualisierung fehlgeschlagen</translation>
-    </message>
-    <message>
-        <location filename="xyToPointMain.py" line="450"/>
-        <source> features!</source>
-        <translation type="unfinished"> Features fehlgeschlagen!</translation>
-    </message>
-    <message>
-        <location filename="xyToPointMain.py" line="450"/>
+        <location filename="xyToPointMain.py" line="618"/>
         <source>Creation failed for </source>
-        <translation>Das Erzeugen von</translation>
+        <translation>Das Erzeugen von </translation>
+    </message>
+    <message>
+        <location filename="xyToPointMain.py" line="618"/>
+        <source> features!</source>
+        <translation> Features fehlgeschlagen!</translation>
     </message>
 </context>
 </TS>
